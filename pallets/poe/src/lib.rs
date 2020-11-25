@@ -38,6 +38,7 @@ decl_event!(
 	pub enum Event<T> where AccountId = <T as frame_system::Trait>::AccountId {
 		ClaimCreated(AccountId, Vec<u8>),
 		ClaimRevoked(AccountId, Vec<u8>),
+		ClaimTransfered(AccountId, AccountId, Vec<u8>),
 	}
 );
 
@@ -87,6 +88,23 @@ decl_module! {
 			Proofs::<T>::remove(&claim);
 
 			Self::deposit_event(RawEvent::ClaimRevoked(sender, claim));
+
+			Ok(())
+		}
+
+		#[weight = 0]
+		pub fn transfer_claim(origin, claim: Vec<u8>, recv: <T as frame_system::Trait>::Origin) -> dispatch::DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			ensure!(Proofs::<T>::contains_key(&claim), Error::<T>::ClaimNotExist);
+
+			let (owner, _block_number) = Proofs::<T>::get(&claim);
+			ensure!(owner == sender, Error::<T>::NotClaimOwner);
+
+			Proofs::<T>::remove(&claim);
+			Proofs::<T>::insert(&claim, (recv.clone(), frame_system::Module::<T>::block_number()));
+
+			Self::deposit_event(RawEvent::ClaimTransfered(origin, recv, claim));
 
 			Ok(())
 		}
