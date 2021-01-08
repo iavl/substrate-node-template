@@ -38,7 +38,6 @@ decl_event!(
 	pub enum Event<T> where AccountId = <T as frame_system::Trait>::AccountId {
 		ClaimCreated(AccountId, Vec<u8>),
 		ClaimRevoked(AccountId, Vec<u8>),
-		ClaimTransfered(AccountId, AccountId, Vec<u8>),
 	}
 );
 
@@ -101,10 +100,7 @@ decl_module! {
 			let (owner, _block_number) = Proofs::<T>::get(&claim);
 			ensure!(owner == sender, Error::<T>::NotClaimOwner);
 
-			Proofs::<T>::remove(&claim);
 			Proofs::<T>::insert(&claim, (newOwner, frame_system::Module::<T>::block_number()));
-
-			Self::deposit_event(RawEvent::ClaimTransfered(origin, newOwner, claim));
 
 			Ok(())
 		}
