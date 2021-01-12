@@ -38,6 +38,9 @@ pub use frame_support::{
 	},
 };
 
+pub use pallet_poe;
+pub use pallet_kitties;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -262,6 +265,11 @@ impl pallet_poe::Trait for Runtime {
 	type Event = Event;
 }
 
+impl pallet_kitties::Trait for Runtime {
+	type Event = Event;
+	type Randomness = RandomnessCollectiveFlip;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -279,6 +287,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 		// Include the custom logic from the template pallet in the runtime.
 		PoeModule: pallet_poe::{Module, Call, Storage, Event<T>},
+		KittiesModule: pallet_kitties::{Module, Call, Storage, Event<T>},
 	}
 );
 
