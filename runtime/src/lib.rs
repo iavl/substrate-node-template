@@ -261,8 +261,13 @@ impl pallet_sudo::Trait for Runtime {
 	type Call = Call;
 }
 
+parameter_types! {
+	pub const MaxClaimLength: u32 = 255;
+}
+
 impl pallet_poe::Trait for Runtime {
 	type Event = Event;
+	type MaxClaimLength = MaxClaimLength;
 }
 
 impl pallet_kitties::Trait for Runtime {
