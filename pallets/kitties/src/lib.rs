@@ -29,11 +29,11 @@ pub trait Trait: frame_system::Trait {
 
 decl_storage! {
     trait Store for Module<T: Trait> as Kitties {
-        // 记录所有kitty数据
+        // kitty id => kitty
         pub Kitties get(fn kitties): map hasher(blake2_128_concat) T::KittyIndex => Option<Kitty>;
-        // 记录kitty数量
+        // kitty count
         pub KittiesCount get(fn kitties_count): T::KittyIndex;
-        // 记录kitty所有者
+        // kitty id => owner
         pub KittyOwners get(fn kitty_owner): map hasher(blake2_128_concat) T::KittyIndex => Option<T::AccountId>;
     }
 }
@@ -50,6 +50,10 @@ decl_error! {
         KittiesCountOverflow,
         InvalidKittyId,
         RequireDifferentParent,
+        BalanceNotEnough,
+        KittyNotExists,
+        NotKittyOwner,
+        TransferToSelf,
 	}
 }
 
@@ -67,6 +71,10 @@ decl_module! {
             let kitty_id = Self::next_kitty_id()?;
             let dna = Self::random_value(&sender);
             let kitty = Kitty(dna);
+
+            // stake token
+            T::Currency::reserve(&sender, T::NewKittyReserve::get()).map_err(|_| Error::<T>::BalanceNotEnough)?;
+
             Self::insert_kitty(&sender, kitty_id, kitty);
             Self::deposit_event(RawEvent::Created(sender, kitty_id));
         }
@@ -74,7 +82,16 @@ decl_module! {
         #[weight = 0]
         pub fn transer(origin, to: T::AccountId, kitty_id: T::KittyIndex) {
             let sender = ensure_signed(origin)?;
-            <KittyOwners<T>>::insert(kitty_id, to.clone());
+
+            // kitty must exist
+            let owner = Self::kitty_owner(kitty_id).ok_or(Error::<T>::KittyNotExists)?;
+            // check kitty owner
+            ensure!(owner == sender, Error::<T>::NotKittyOwner);
+            // can't transfer to self
+            ensure!(to != sender, Error::<T>::TransferToSelf);
+
+            <KittyOwners<T>>::insert(kitty_id, &to);
+
             Self::deposit_event(RawEvent::Transferred(sender, to, kitty_id));
         }
 

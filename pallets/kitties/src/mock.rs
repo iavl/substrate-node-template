@@ -10,6 +10,13 @@ impl_outer_origin! {
 	pub enum Origin for Test {}
 }
 
+impl_outer_event! {
+    pub enum TestEvent for Test {
+        system<T>, 
+        kitties_event<T>,
+        balances<T>, 
+    }
+}
 // Configure a mock runtime to test the pallet.
 
 #[derive(Clone, Eq, PartialEq)]
@@ -49,14 +56,32 @@ impl system::Trait for Test {
 	type SystemWeightInfo = ();
 }
 
+impl balances::Trait for Test {
+    type Balance = u64;
+    type MaxLocks = ();
+    type Event = TestEvent;
+    type DustRemoval = ();
+    type ExistentialDeposit = ExistentialDeposit;
+    type AccountStore = system::Module<Test>;
+    type WeightInfo = ();
+}
+
 type Randomness = pallet_randomness_collective_flip::Module<Test>;
+
+parameter_types! {
+    pub const NewKittyReserve: u64 = 5_000;
+}
 
 impl Trait for Test {
 	type Event = ();
+	type KittyIndex = u32;
 	type Randomness = Randomness;
+	type NewKittyReserve = NewKittyReserve;
+    type Currency = balances::Module<Self>;
 }
 
 pub type KittiesModule = Module<Test>;
+pub type System = frame_system::Module<Test>;
 
 pub fn run_to_block(n: u64) {
 	while system::BlockNumber() < n {
