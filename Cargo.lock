@@ -3636,6 +3636,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-token"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-transaction-payment"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
