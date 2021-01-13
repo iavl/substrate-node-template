@@ -282,6 +282,7 @@ impl pallet_kitties::Trait for Runtime {
 	type Randomness = RandomnessCollectiveFlip;
 	type KittyIndex = KittyInex;
 	type NewKittyReserve = NewKittyReserve;
+    type Currency = pallet_balances::Module<Self>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

@@ -11,14 +11,20 @@ use sp_runtime::{
     DispatchError,
 };
 use sp_std::prelude::*;
+use frame_support::traits::Currency;
+use frame_support::traits::ReservableCurrency;
 
 #[derive(Encode, Decode)]
 pub struct Kitty(pub [u8; 16]);
+
+type BalanceOf<T> = <<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
 
 pub trait Trait: frame_system::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
     type Randomness: Randomness<Self::Hash>;
     type KittyIndex: Parameter + Default + AtLeast32BitUnsigned + Copy + Bounded;
+    type NewKittyReserve: Get<BalanceOf<Self>>;
+    type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
 }
 
 decl_storage! {
@@ -87,8 +93,8 @@ fn combine_dna(dna1: u8, dna2: u8, selector: u8) -> u8 {
 
 impl<T: Trait> Module<T> {
     fn insert_kitty(owner: &T::AccountId, kitty_id: T::KittyIndex, kitty: Kitty) {
-        Kitties::insert(kitty_id, kitty);
-        KittiesCount::put(kitty_id + 1);
+        <Kitties<T>>::insert(kitty_id, kitty);
+        <KittiesCount<T>>::put(kitty_id + 1.into());
         <KittyOwners<T>>::insert(kitty_id, owner);
     }
 
@@ -110,7 +116,7 @@ impl<T: Trait> Module<T> {
         payload.using_encoded(blake2_128)
     }
 
-    fn do_breed(sender: &T::AccountId, kitty_id_1: KittyIndex, kitty_id_2: KittyIndex) -> sp_std::result::Result<KittyIndex, DispatchError> {
+    fn do_breed(sender: &T::AccountId, kitty_id_1: T::KittyIndex, kitty_id_2: T::KittyIndex) -> sp_std::result::Result<T::KittyIndex, DispatchError> {
         let kitty1 = Self::kitties(kitty_id_1).ok_or(Error::<T>::InvalidKittyId)?;
         let kitty2 = Self::kitties(kitty_id_2).ok_or(Error::<T>::InvalidKittyId)?;
 
