@@ -67,6 +67,9 @@ pub type Hash = sp_core::H256;
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
 
+/// Kitty index type
+pub type KittyInex = u32;
+
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -270,9 +273,15 @@ impl pallet_poe::Trait for Runtime {
 	type MaxClaimLength = MaxClaimLength;
 }
 
+parameter_types! {
+    pub const NewKittyReserve: u32 = 1000000;
+}
+
 impl pallet_kitties::Trait for Runtime {
 	type Event = Event;
 	type Randomness = RandomnessCollectiveFlip;
+	type KittyIndex = KittyInex;
+	type NewKittyReserve = NewKittyReserve;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

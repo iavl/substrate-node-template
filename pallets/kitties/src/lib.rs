@@ -2,13 +2,15 @@
 
 use codec::{Encode, Decode};
 use frame_support::{decl_module, decl_storage, decl_event,
-                    ensure, decl_error, dispatch, StorageValue, StorageMap, traits::Randomness, traits::{Get}};
+                    ensure, decl_error, dispatch, StorageValue, StorageMap, traits::Randomness, Parameter, traits::{Get},
+};
 use sp_io::hashing::blake2_128;
 use frame_system::ensure_signed;
-use sp_runtime::DispatchError;
+use sp_runtime::{
+    traits::{AtLeast32BitUnsigned, Bounded},
+    DispatchError,
+};
 use sp_std::prelude::*;
-
-type KittyIndex = u32;
 
 #[derive(Encode, Decode)]
 pub struct Kitty(pub [u8; 16]);
@@ -16,18 +18,22 @@ pub struct Kitty(pub [u8; 16]);
 pub trait Trait: frame_system::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
     type Randomness: Randomness<Self::Hash>;
+    type KittyIndex: Parameter + Default + AtLeast32BitUnsigned + Copy + Bounded;
 }
 
 decl_storage! {
     trait Store for Module<T: Trait> as Kitties {
-        pub Kitties get(fn kitties): map hasher(blake2_128_concat) KittyIndex => Option<Kitty>;
-        pub KittiesCount get(fn kitties_count): KittyIndex;
-        pub KittyOwners get(fn kitty_owner): map hasher(blake2_128_concat) KittyIndex => Option<T::AccountId>;
+        // 记录所有kitty数据
+        pub Kitties get(fn kitties): map hasher(blake2_128_concat) T::KittyIndex => Option<Kitty>;
+        // 记录kitty数量
+        pub KittiesCount get(fn kitties_count): T::KittyIndex;
+        // 记录kitty所有者
+        pub KittyOwners get(fn kitty_owner): map hasher(blake2_128_concat) T::KittyIndex => Option<T::AccountId>;
     }
 }
 
 decl_event!(
-	pub enum Event<T> where AccountId = <T as frame_system::Trait>::AccountId {
+	pub enum Event<T> where AccountId = <T as frame_system::Trait>::AccountId, <T as Trait>::KittyIndex {
         Created(AccountId, KittyIndex),
         Transferred(AccountId, AccountId, KittyIndex),
 	}
@@ -60,14 +66,14 @@ decl_module! {
         }
 
         #[weight = 0]
-        pub fn transer(origin, to: T::AccountId, kitty_id: KittyIndex) {
+        pub fn transer(origin, to: T::AccountId, kitty_id: T::KittyIndex) {
             let sender = ensure_signed(origin)?;
             <KittyOwners<T>>::insert(kitty_id, to.clone());
             Self::deposit_event(RawEvent::Transferred(sender, to, kitty_id));
         }
 
         #[weight = 0]
-        pub fn breed(origin, kitty_id_1: KittyIndex, kitty_id_2: KittyIndex) {
+        pub fn breed(origin, kitty_id_1: T::KittyIndex, kitty_id_2: T::KittyIndex) {
             let sender = ensure_signed(origin)?;
             let new_kitty_id = Self::do_breed(&sender, kitty_id_1, kitty_id_2)?;
             Self::deposit_event(RawEvent::Created(sender, new_kitty_id));
@@ -80,15 +86,15 @@ fn combine_dna(dna1: u8, dna2: u8, selector: u8) -> u8 {
 }
 
 impl<T: Trait> Module<T> {
-    fn insert_kitty(owner: &T::AccountId, kitty_id: KittyIndex, kitty: Kitty) {
+    fn insert_kitty(owner: &T::AccountId, kitty_id: T::KittyIndex, kitty: Kitty) {
         Kitties::insert(kitty_id, kitty);
         KittiesCount::put(kitty_id + 1);
         <KittyOwners<T>>::insert(kitty_id, owner);
     }
 
-    fn next_kitty_id() -> sp_std::result::Result<KittyIndex, DispatchError> {
+    fn next_kitty_id() -> sp_std::result::Result<T::KittyIndex, DispatchError> {
         let kitty_id = Self::kitties_count();
-        if kitty_id == KittyIndex::max_value() {
+        if kitty_id == <T as Trait>::KittyIndex::max_value() {
             return Err(Error::<T>::KittiesCountOverflow.into());
         }
 
