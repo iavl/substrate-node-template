@@ -96,29 +96,23 @@ impl Trait for Test {
 pub type KittiesModule = Module<Test>;
 pub type System = frame_system::Module<Test>;
 
+/// Run until a particular block.
 pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
-		KittiesModule::on_finalize(System::block_number());
-		System::on_finalize(System::block_number());
-		System::set_block_number(System::block_number());
+		if System::block_number() > 1 {
+			KittiesModule::on_finalize(System::block_number());
+			System::on_finalize(System::block_number());
+		}
+		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
 		KittiesModule::on_initialize(System::block_number());
 	}
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    let mut t = system::GenesisConfig::default()
-        .build_storage::<Test>()
-        .unwrap()
-        .into();
-
-    balances::GenesisConfig::<Test> {
-        balances: vec![(1, 5000000), (2, 51000000), (3, 5200000), (4, 53000000), (5, 54000000)],
-    }
-    .assimilate_storage(&mut t)
-    .unwrap();
-
-    let mut ext = sp_io::TestExternalities::new(t);
-    ext.execute_with(|| System::set_block_number(1));
-    ext
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	balances::GenesisConfig::<Test> {
+		balances: vec![(1, 100000000), (2, 100000000), (3, 100000000), (4, 100000000), (5, 100000000)],
+	}.assimilate_storage(&mut t).unwrap();
+	t.into()
 }
