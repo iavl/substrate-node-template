@@ -2,7 +2,7 @@
 
 use codec::{Encode, Decode};
 use frame_support::{decl_module, decl_storage, decl_event,
-                    ensure, decl_error, dispatch, StorageValue, StorageMap, traits::Randomness, Parameter, traits::{Get},
+                    ensure, decl_error, StorageValue, StorageMap, traits::Randomness, Parameter, traits::{Get},
 };
 use sp_io::hashing::blake2_128;
 use frame_system::ensure_signed;
@@ -13,6 +13,13 @@ use sp_runtime::{
 use sp_std::prelude::*;
 use frame_support::traits::Currency;
 use frame_support::traits::ReservableCurrency;
+
+// import test file
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
 
 #[derive(Encode, Decode)]
 pub struct Kitty(pub [u8; 16]);
