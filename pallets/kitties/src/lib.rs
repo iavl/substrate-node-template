@@ -156,6 +156,10 @@ impl<T: Trait> Module<T> {
         for i in 0..kitty1_dna.len() {
             new_dna[i] = combine_dna(kitty1_dna[i], kitty2_dna[i], selector[i]);
         }
+
+        // stake token
+        T::Currency::reserve(&sender, T::NewKittyReserve::get()).map_err(|_| Error::<T>::BalanceNotEnough)?;
+
         Self::insert_kitty(sender, kitty_id, Kitty(new_dna));
         Ok(kitty_id)
     }

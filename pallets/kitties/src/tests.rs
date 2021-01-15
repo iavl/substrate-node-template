@@ -1,6 +1,9 @@
 use crate::{mock::*, Error, Event};
 use frame_support::{assert_noop, assert_ok};
+use frame_system::EventRecord;
+use frame_system::Phase;
 
+// create kitty
 #[test]
 fn owned_kitties_can_append_value() {
     new_test_ext().execute_with(|| {
@@ -15,7 +18,7 @@ fn owned_kitties_can_append_value() {
     })
 }
 
-
+// transfer kitty
 #[test]
 fn owner_kitties_transfer() {
     new_test_ext().execute_with(|| {
@@ -30,10 +33,6 @@ fn owner_kitties_transfer() {
         )
     })
 }
-
-// test KittiesCountOverflow
-// test InvalidKittyId
-// test RequireDifferentParent
 
 // test NotKittyOwner
 #[test]
@@ -82,6 +81,43 @@ fn kitties_transfer_failed_when_not_exist() {
         assert_noop!(
             KittiesModule::transfer(Origin::signed(1), 2, 0),
             Error::<Test>::KittyNotExists
+        );
+    })
+}
+
+// breed kitty
+#[test]
+fn breed_kitty_work() {
+    new_test_ext().execute_with(|| {
+        run_to_block(5);
+        let _ = KittiesModule::create(Origin::signed(1));
+        let _ = KittiesModule::create(Origin::signed(1));
+
+        assert_ok!(KittiesModule::breed(Origin::signed(1), 0, 1));
+        assert_eq!(
+            System::events(),
+            vec![
+                EventRecord {
+                    phase: Phase::Initialization, 
+                    event: TestEvent::balances(RawEvent::Reserved(1, 5000)), 
+                    topics: vec![],
+                },
+                EventRecord {
+                    phase: Phase::Initialization,
+                    event: TestEvent::kitties_event(Event::<Test>::Created(1u64, 5000)),
+                    topics: vec![],
+                },
+                EventRecord {
+                    phase: Phase::Initialization,
+                    event: TestEvent::kitties_event(Event::<Test>::Created(1u64, 5000)),
+                    topics: vec![],
+                },
+                EventRecord {
+                    phase: Phase::Initialization,
+                    event: TestEvent::kitties_event(Event::<Test>::Created(1u64, 5000)),
+                    topics: vec![],
+                },
+            ]
         );
     })
 }
