@@ -133,3 +133,44 @@ fn breed_kitty_work() {
     })
 }
 
+// breed kitty when not exist
+#[test]
+fn kitties_breed_failed_when_not_exist() {
+    new_test_ext().execute_with(|| {
+        run_to_block(5);
+
+        assert_noop!(
+            KittiesModule::breed(Origin::signed(1), 0, 1),
+            Error::<Test>::KittyNotExists
+        );
+    })
+}
+
+// test RequireDifferentParent
+#[test]
+fn kitties_breed_failed_when_same_parent() {
+    new_test_ext().execute_with(|| {
+        run_to_block(5);
+        let _ = KittiesModule::create(Origin::signed(1));
+
+        assert_noop!(
+            KittiesModule::breed(Origin::signed(1), 0, 0),
+            Error::<Test>::RequireDifferentParent
+        );
+    })
+}
+
+// breed kitty when not owner
+#[test]
+fn kitties_breed_failed_when_not_owner() {
+    new_test_ext().execute_with(|| {
+        run_to_block(5);
+        let _ = KittiesModule::create(Origin::signed(1));
+        let _ = KittiesModule::create(Origin::signed(1));
+
+        assert_noop!(
+            KittiesModule::breed(Origin::signed(2), 0, 1),
+            Error::<Test>::NotKittyOwner
+        );
+    })
+}
