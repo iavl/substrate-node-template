@@ -12,7 +12,6 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 use sp_std::ops::Index;
-use sp_std::fmt::Debug;
 use sp_std::vec;
 use frame_support::traits::Currency;
 use frame_support::traits::ReservableCurrency;
@@ -26,7 +25,7 @@ mod mock;
 mod tests;
 
 /// DNA
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, Clone, Copy)]
 pub struct DNA(pub [u8; 16]);
 
 impl DNA {
@@ -36,6 +35,10 @@ impl DNA {
 
     pub fn set(self, val: [u8; 16]) -> Self {
         Self { 0: val}
+    }
+    
+    pub fn len(&self) -> usize {
+        self.0.len()
     }
 }
 
@@ -250,7 +253,7 @@ impl<T: Trait> Module<T> {
         <KittyOwners<T>>::insert(kitty_id, owner);
 
         if <KittyTotal<T>>::contains_key(&owner) {
-            let _ = <KittyTotal<T>>::mutate(owner, |val| val.push(kitty_id))
+            let _ = <KittyTotal<T>>::mutate(owner, |val| val.push(kitty_id));
         } else {
             <KittyTotal<T>>::insert(owner, vec![kitty_id]);
         }
@@ -273,7 +276,7 @@ impl<T: Trait> Module<T> {
 
         if <KittyChildren<T>>::contains_key(father, mother) {
             let val: vec::Vec<T::KittyIndex> = <KittyChildren<T>>::get(father, mother);
-            let reverve_val: vec::Vec<T::KittyIndex> =
+            let reserve_val: vec::Vec<T::KittyIndex> =
                 val.into_iter().filter(|&val| val != kitty_id).collect();
             <KittyBrother<T>>::insert(kitty_id, reserve_val);
         } else {
@@ -335,8 +338,8 @@ impl<T: Trait> Module<T> {
         // update kitty brother
         Self::update_kitty_brother(kitty_id);
 
-        let kitty1_dna = kitty1.0;
-        let kitty2_dna = kitty2.0;
+        let kitty1_dna = kitty1.get_self_dna();
+        let kitty2_dna = kitty2.get_self_dna();
         let selector = Self::random_value(&sender);
         let mut new_dna = [0u8; 16];
 
