@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Encode, Decode};
-use frame_support::{decl_module, decl_storage, decl_event,
+use frame_support::{decl_module, decl_storage, decl_event, dispatch,
                     ensure, decl_error, StorageValue, StorageMap, traits::Randomness, Parameter, traits::{Get},
 };
 use sp_io::hashing::blake2_128;
@@ -11,8 +11,12 @@ use sp_runtime::{
     DispatchError,
 };
 use sp_std::prelude::*;
+use sp_std::ops::Index;
+use sp_std::fmt::Debug;
+use sp_std::vec;
 use frame_support::traits::Currency;
 use frame_support::traits::ReservableCurrency;
+
 
 // import test file
 #[cfg(test)]
@@ -21,8 +25,120 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+/// DNA
 #[derive(Encode, Decode)]
-pub struct Kitty(pub [u8; 16]);
+pub struct DNA(pub [u8; 16]);
+
+impl DNA {
+    pub fn new() -> Self {
+        Self { 0: [0; 16] }
+    }
+
+    pub fn set(self, val: [u8; 16]) -> Self {
+        Self { 0: val}
+    }
+}
+
+impl Index<usize> for DNA {
+    type Output = u8;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
+/// Parent
+#[derive(Encode, Decode)]
+pub struct Parents {
+    father: DNA,
+    mother: DNA,
+}
+
+impl Parents {
+    pub fn new() -> Self {
+        Self {
+            father: DNA::new(),
+            mother: DNA::new(),
+        }
+    }
+
+    pub fn set_father(self, father: DNA) -> Self {
+        Self { father, ..self }
+    }
+
+    pub fn set_mother(self, mother: DNA) -> Self {
+        Self { mother, ..self }
+    }
+}
+
+/// Kitty
+
+// #[derive(Encode, Decode)]
+// pub struct Kitty(pub [u8; 16]);
+
+#[derive(Encode, Decode)]
+pub struct Kitty {
+    parents_dna: Parents,
+    brothers_dna: DNA,
+    children_dna: DNA,
+    partner_dna: DNA,
+    self_dna: DNA,
+}
+
+impl Kitty {
+    pub fn new() -> Self {
+        Self {
+            parents_dna: Parents {
+                father: DNA::new(),
+                mother: DNA::new(),
+            },
+            brothers_dna: DNA::new(),
+            children_dna: DNA::new(),
+            partner_dna: DNA::new(),
+            self_dna: DNA::new(),
+        }
+    }
+
+    pub fn set_self_dna(self, dna: DNA) -> Self {
+        Self {
+            self_dna: dna,
+            ..self
+        }
+    }
+
+    pub fn set_parents_dna(self, dna: Parents) -> Self {
+        Self {
+            parents_dna: dna,
+            ..self
+        }
+    }
+
+    pub fn set_partner_dna(self, dna: DNA) -> Self {
+        Self {
+            partner_dna: dna,
+            ..self
+        }
+    }
+
+    pub fn set_brother_dna(self, dna: DNA) -> Self {
+        Self {
+            brothers_dna: dna,
+            ..self
+        }
+    }
+
+    pub fn mutate_partner_dna(&mut self, partner_dna: DNA) {
+        self.partner_dna = partner_dna;
+    }
+
+    pub fn mutate_children_dna(&mut self, children_dna: DNA) {
+        self.children_dna = children_dna;
+    }
+
+    pub fn get_self_dna(&self) -> DNA {
+        self.self_dna
+    }
+}
 
 type BalanceOf<T> = <<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
 
@@ -42,6 +158,11 @@ decl_storage! {
         pub KittiesCount get(fn kitties_count): T::KittyIndex;
         // kitty id => owner
         pub KittyOwners get(fn kitty_owner): map hasher(blake2_128_concat) T::KittyIndex => Option<T::AccountId>;
+        pub KittyTotal get(fn kitty_total): map hasher(blake2_128_concat) T::AccountId => vec::Vec<T::KittyIndex>;
+        pub KittyParents get(fn kitty_parents): map hasher(blake2_128_concat) T::KittyIndex => (T::KittyIndex, T::KittyIndex);
+        pub KittyChildren get(fn kitty_children): double_map hasher(blake2_128_concat) T::KittyIndex, hasher(blake2_128_concat) T::KittyIndex => vec::Vec<T::KittyIndex>;
+        pub KittyBrother get(fn kitty_brother): map hasher(blake2_128_concat) T::KittyIndex => vec::Vec<T::KittyIndex>;
+        pub KittyPartner get(fn kitty_partner): map hasher(blake2_128_concat) T::KittyIndex => T::KittyIndex;
     }
 }
 
@@ -73,21 +194,24 @@ decl_module! {
         fn deposit_event() = default;
 
         #[weight = 0]
-        pub fn create(origin) {
+        pub fn create(origin) -> dispatch::DispatchResult {
             let sender = ensure_signed(origin)?;
             let kitty_id = Self::next_kitty_id()?;
             let dna = Self::random_value(&sender);
-            let kitty = Kitty(dna);
+
+            let kitty = Kitty::new().set_self_dna(dna);
 
             // stake token
             T::Currency::reserve(&sender, T::NewKittyReserve::get()).map_err(|_| Error::<T>::BalanceNotEnough)?;
 
             Self::insert_kitty(&sender, kitty_id, kitty);
             Self::deposit_event(RawEvent::Created(sender, kitty_id));
+
+            Ok(())
         }
 
         #[weight = 0]
-        pub fn transfer(origin, to: T::AccountId, kitty_id: T::KittyIndex) {
+        pub fn transfer(origin, to: T::AccountId, kitty_id: T::KittyIndex) -> dispatch::DispatchResult {
             let sender = ensure_signed(origin)?;
 
             // kitty must exist
@@ -100,13 +224,17 @@ decl_module! {
             <KittyOwners<T>>::insert(kitty_id, &to);
 
             Self::deposit_event(RawEvent::Transferred(sender, to, kitty_id));
+
+            Ok(())
         }
 
         #[weight = 0]
-        pub fn breed(origin, kitty_id_1: T::KittyIndex, kitty_id_2: T::KittyIndex) {
+        pub fn breed(origin, kitty_id_1: T::KittyIndex, kitty_id_2: T::KittyIndex) -> dispatch::DispatchResult {
             let sender = ensure_signed(origin)?;
             let new_kitty_id = Self::do_breed(&sender, kitty_id_1, kitty_id_2)?;
             Self::deposit_event(RawEvent::Created(sender, new_kitty_id));
+
+            Ok(())
         }
 	}
 }
@@ -120,6 +248,41 @@ impl<T: Trait> Module<T> {
         <Kitties<T>>::insert(kitty_id, kitty);
         <KittiesCount<T>>::put(kitty_id + 1.into());
         <KittyOwners<T>>::insert(kitty_id, owner);
+
+        if <KittyTotal<T>>::contains_key(&owner) {
+            let _ = <KittyTotal<T>>::mutate(owner, |val| val.push(kitty_id))
+        } else {
+            <KittyTotal<T>>::insert(owner, vec![kitty_id]);
+        }
+    }
+
+    fn update_kitty_parents(children: T::KittyIndex, father: T::KittyIndex, mother: T::KittyIndex) {
+            <KittyParents<T>>::insert(children, (father, mother));
+    }
+
+    fn update_kitty_children(children: T::KittyIndex, father: T::KittyIndex, mother: T::KittyIndex) {
+        if <KittyChildren<T>>::contains_key(father, mother) {
+            let _ = <KittyChildren<T>>::mutate(father, mother, |val| val.push(children));
+        } else {
+            <KittyChildren<T>>::insert(father, mother, vec![children]);
+        }
+    }
+
+    fn update_kitty_brother(kitty_id: T::KittyIndex) {
+        let (father, mother) = <KittyParents<T>>::get(kitty_id);
+
+        if <KittyChildren<T>>::contains_key(father, mother) {
+            let val: vec::Vec<T::KittyIndex> = <KittyChildren<T>>::get(father, mother);
+            let reverve_val: vec::Vec<T::KittyIndex> =
+                val.into_iter().filter(|&val| val != kitty_id).collect();
+            <KittyBrother<T>>::insert(kitty_id, reserve_val);
+        } else {
+            <KittyBrother<T>>::insert(kitty_id, vec::Vec::<T::KittyIndex>::new());
+        }
+    }
+
+    fn update_kitty_partner(partner1: T::KittyIndex, partner2: T::KittyIndex) {
+        <KittyPartner<T>>::insert(partner1, partner2);
     }
 
     fn next_kitty_id() -> sp_std::result::Result<T::KittyIndex, DispatchError> {
@@ -131,16 +294,20 @@ impl<T: Trait> Module<T> {
         Ok(kitty_id)
     }
 
-    fn random_value(sender: &T::AccountId) -> [u8; 16] {
+    fn random_value(sender: &T::AccountId) -> DNA {
         let payload = (
             T::Randomness::random_seed(),
             &sender,
             <frame_system::Module<T>>::extrinsic_index(),
         );
-        payload.using_encoded(blake2_128)
+        DNA::new().set(payload.using_encoded(blake2_128))
     }
 
-    fn do_breed(sender: &T::AccountId, kitty_id_1: T::KittyIndex, kitty_id_2: T::KittyIndex) -> sp_std::result::Result<T::KittyIndex, DispatchError> {
+    fn do_breed(
+        sender: &T::AccountId, 
+        kitty_id_1: T::KittyIndex, 
+        kitty_id_2: T::KittyIndex
+    ) -> sp_std::result::Result<T::KittyIndex, DispatchError> {
         let kitty1 = Self::kitties(kitty_id_1).ok_or(Error::<T>::InvalidKittyId)?;
         let kitty2 = Self::kitties(kitty_id_2).ok_or(Error::<T>::InvalidKittyId)?;
 
@@ -154,6 +321,20 @@ impl<T: Trait> Module<T> {
 
         let kitty_id = Self::next_kitty_id()?;
 
+        // update kitty partner
+        Self::update_kitty_partner(kitty_id_1, kitty_id_2);
+        Self::update_kitty_partner(kitty_id_2, kitty_id_1);
+
+        // update kitty parents
+        Self::update_kitty_parents(kitty_id, kitty_id_1, kitty_id_2);
+
+        // update kitty children
+        Self::update_kitty_children(kitty_id, kitty_id_2, kitty_id_2);
+
+
+        // update kitty brother
+        Self::update_kitty_brother(kitty_id);
+
         let kitty1_dna = kitty1.0;
         let kitty2_dna = kitty2.0;
         let selector = Self::random_value(&sender);
@@ -163,10 +344,13 @@ impl<T: Trait> Module<T> {
             new_dna[i] = combine_dna(kitty1_dna[i], kitty2_dna[i], selector[i]);
         }
 
+        let new_dna = DNA::new().set(new_dna);
+        let new_kitty = Kitty::new().set_self_dna(new_dna);
+
         // stake token
         T::Currency::reserve(&sender, T::NewKittyReserve::get()).map_err(|_| Error::<T>::BalanceNotEnough)?;
 
-        Self::insert_kitty(sender, kitty_id, Kitty(new_dna));
+        Self::insert_kitty(sender, kitty_id, new_kitty);
         Ok(kitty_id)
     }
 }
