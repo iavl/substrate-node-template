@@ -2,6 +2,7 @@ use crate::{mock::*, Error, Event};
 use frame_support::{assert_noop, assert_ok};
 use frame_system::EventRecord;
 use frame_system::Phase;
+use balances::RawEvent;
 
 // create kitty
 #[test]
@@ -99,22 +100,32 @@ fn breed_kitty_work() {
             vec![
                 EventRecord {
                     phase: Phase::Initialization, 
-                    event: TestEvent::balances(RawEvent::Reserved(1, 5000)), 
+                    event: TestEvent::balances(RawEvent::Reserved(1u64, 5000)), 
                     topics: vec![],
                 },
                 EventRecord {
                     phase: Phase::Initialization,
-                    event: TestEvent::kitties_event(Event::<Test>::Created(1u64, 5000)),
+                    event: TestEvent::kitties_event(Event::<Test>::Created(1u64, 0)),
+                    topics: vec![],
+                },
+                EventRecord {
+                    phase: Phase::Initialization, 
+                    event: TestEvent::balances(RawEvent::Reserved(1u64, 5000)), 
                     topics: vec![],
                 },
                 EventRecord {
                     phase: Phase::Initialization,
-                    event: TestEvent::kitties_event(Event::<Test>::Created(1u64, 5000)),
+                    event: TestEvent::kitties_event(Event::<Test>::Created(1u64, 1)),
+                    topics: vec![],
+                },
+                EventRecord {
+                    phase: Phase::Initialization, 
+                    event: TestEvent::balances(RawEvent::Reserved(1u64, 5000)), 
                     topics: vec![],
                 },
                 EventRecord {
                     phase: Phase::Initialization,
-                    event: TestEvent::kitties_event(Event::<Test>::Created(1u64, 5000)),
+                    event: TestEvent::kitties_event(Event::<Test>::Created(1u64, 2)),
                     topics: vec![],
                 },
             ]
