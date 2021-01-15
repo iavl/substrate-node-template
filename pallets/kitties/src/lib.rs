@@ -146,6 +146,12 @@ impl<T: Trait> Module<T> {
 
         ensure!(kitty_id_1 != kitty_id_2, Error::<T>::RequireDifferentParent);
 
+        let owner1 = Self::kitty_owner(kitty_id_1).ok_or(Error::<T>::KittyNotExists)?;
+        let owner2 = Self::kitty_owner(kitty_id_2).ok_or(Error::<T>::KittyNotExists)?;
+
+        ensure!(owner1 == *sender, Error::<T>::NotKittyOwner);
+        ensure!(owner2 == *sender, Error::<T>::NotKittyOwner);
+
         let kitty_id = Self::next_kitty_id()?;
 
         let kitty1_dna = kitty1.0;

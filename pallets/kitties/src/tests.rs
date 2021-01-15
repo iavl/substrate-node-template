@@ -141,7 +141,7 @@ fn kitties_breed_failed_when_not_exist() {
 
         assert_noop!(
             KittiesModule::breed(Origin::signed(1), 0, 1),
-            Error::<Test>::KittyNotExists
+            Error::<Test>::InvalidKittyId
         );
     })
 }
