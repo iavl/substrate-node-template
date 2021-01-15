@@ -87,7 +87,7 @@ decl_module! {
         }
 
         #[weight = 0]
-        pub fn transer(origin, to: T::AccountId, kitty_id: T::KittyIndex) {
+        pub fn transfer(origin, to: T::AccountId, kitty_id: T::KittyIndex) {
             let sender = ensure_signed(origin)?;
 
             // kitty must exist
