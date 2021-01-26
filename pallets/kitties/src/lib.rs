@@ -2,7 +2,8 @@
 
 use codec::{Encode, Decode};
 use frame_support::{decl_module, decl_storage, decl_event, dispatch,
-                    ensure, decl_error, StorageValue, StorageMap, traits::Randomness, Parameter, traits::{Get},
+                    ensure, decl_error, StorageValue, StorageMap, Parameter,
+                    traits::{Get, Randomness, Currency, ExistenceRequirement},
 };
 use sp_io::hashing::blake2_128;
 use frame_system::ensure_signed;
@@ -13,7 +14,6 @@ use sp_runtime::{
 use sp_std::prelude::*;
 use sp_std::ops::Index;
 use sp_std::vec;
-use frame_support::traits::Currency;
 use frame_support::traits::ReservableCurrency;
 
 
@@ -102,13 +102,26 @@ decl_storage! {
         pub KittyChildren get(fn kitty_children): double_map hasher(blake2_128_concat) T::KittyIndex, hasher(blake2_128_concat) T::KittyIndex => vec::Vec<T::KittyIndex>;
         pub KittyBrother get(fn kitty_brother): map hasher(blake2_128_concat) T::KittyIndex => vec::Vec<T::KittyIndex>;
         pub KittyPartner get(fn kitty_partner): map hasher(blake2_128_concat) T::KittyIndex => T::KittyIndex;
+
+        // Get kitty price. None means not for sale.
+		pub KittyPrices get(fn kitty_price): map hasher(blake2_128_concat) T::KittyIndex => Option<BalanceOf<T>>;
     }
 }
 
 decl_event!(
-	pub enum Event<T> where AccountId = <T as frame_system::Trait>::AccountId, <T as Trait>::KittyIndex {
+    pub enum Event<T> where 
+    <T as frame_system::Trait>::AccountId, 
+    <T as Trait>::KittyIndex,
+    Balance = BalanceOf<T>,
+    {
+        /// A kitty is created. (owner, kitty_id)
         Created(AccountId, KittyIndex),
+        /// A kitty is transferred. (from, to, kitty_id)
         Transferred(AccountId, AccountId, KittyIndex),
+        /// A kitty is available for sale. (owner, kitty_id, price)
+		Ask(AccountId, KittyIndex, Option<Balance>),
+		/// A kitty is sold. (from, to, kitty_id, price)
+		Sold(AccountId, AccountId, KittyIndex, Balance),
 	}
 );
 
@@ -121,6 +134,8 @@ decl_error! {
         KittyNotExists,
         NotKittyOwner,
         TransferToSelf,
+        NotForSale,
+		PriceTooLow,
 	}
 }
 
@@ -166,6 +181,37 @@ decl_module! {
 
             Ok(())
         }
+
+        /// Set a price for a kitty for sale
+		/// None to delist the kitty
+        #[weight = 0]
+		pub fn ask(origin, kitty_id: T::KittyIndex, new_price: Option<BalanceOf<T>>) {
+			let sender = ensure_signed(origin)?;
+
+			let owner = Self::kitty_owner(kitty_id).ok_or(Error::<T>::KittyNotExists)?;
+            // check kitty owner
+            ensure!(owner == sender, Error::<T>::NotKittyOwner);
+
+			<KittyPrices<T>>::mutate_exists(kitty_id, |price| *price = new_price);
+			Self::deposit_event(RawEvent::Ask(sender, kitty_id, new_price));
+        }
+        
+        /// Buy a kitty
+		#[weight = 0]
+		pub fn buy(origin, kitty_id: T::KittyIndex, price: BalanceOf<T>) {
+			let sender = ensure_signed(origin)?;
+
+			let owner = Self::kitty_owner(kitty_id).ok_or(Error::<T>::InvalidKittyId)?;
+			let kitty_price = Self::kitty_price(kitty_id).ok_or(Error::<T>::NotForSale)?;
+
+			ensure!(price >= kitty_price, Error::<T>::PriceTooLow);
+
+			T::Currency::transfer(&sender, &owner, kitty_price, ExistenceRequirement::KeepAlive)?;
+
+			<KittyPrices<T>>::remove(kitty_id);
+			<KittyOwners<T>>::insert(kitty_id, sender.clone());
+			Self::deposit_event(RawEvent::Sold(owner, sender, kitty_id, kitty_price));
+		}
 
         #[weight = 0]
         pub fn breed(origin, kitty_id_1: T::KittyIndex, kitty_id_2: T::KittyIndex) -> dispatch::DispatchResult {
