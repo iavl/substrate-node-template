@@ -3277,8 +3277,8 @@ dependencies = [
  "hex-literal",
  "pallet-aura",
  "pallet-balances",
+ "pallet-benchmark-demo",
  "pallet-grandpa",
- "pallet-kitties",
  "pallet-poe",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
@@ -3500,6 +3500,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-benchmark-demo"
+version = "2.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-finality-tracker"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3536,21 +3547,6 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-kitties"
-version = "2.0.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-randomness-collective-flip",
- "parity-scale-codec",
- "sp-core",
- "sp-io",
- "sp-runtime",
  "sp-std",
 ]
 
