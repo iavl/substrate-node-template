@@ -3284,6 +3284,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "pallet-aura",
  "pallet-authorship",
  "pallet-babe",
  "pallet-balances",
@@ -3311,6 +3312,7 @@ dependencies = [
  "serde",
  "sp-api",
  "sp-block-builder",
+ "sp-consensus-aura",
  "sp-consensus-babe",
  "sp-core",
  "sp-inherents",
@@ -3470,6 +3472,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ff55baddef9e4ad00f88b6c743a2a8062d4c6ade126c2a528644b8e444d52ce"
 dependencies = [
  "stable_deref_trait",
+]
+
+[[package]]
+name = "pallet-aura"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8df67bf96a70cecc2c60989381bc3d21172cdb7534c187c20953f4594736a8ac"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-session",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "serde",
+ "sp-application-crypto",
+ "sp-consensus-aura",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
+ "sp-timestamp",
 ]
 
 [[package]]
@@ -6352,6 +6374,21 @@ dependencies = [
  "sp-version",
  "substrate-prometheus-endpoint",
  "wasm-timer",
+]
+
+[[package]]
+name = "sp-consensus-aura"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0b7eb31572227860f091208fe1185482ce2d722bde3a405e0c5e0cc095aa0ff"
+dependencies = [
+ "parity-scale-codec",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
+ "sp-timestamp",
 ]
 
 [[package]]
