@@ -3235,25 +3235,34 @@ version = "2.0.0"
 dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
+ "hex-literal",
  "jsonrpc-core",
  "node-template-runtime",
+ "pallet-im-online",
+ "pallet-staking",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
  "sc-cli",
  "sc-client-api",
  "sc-consensus",
- "sc-consensus-aura",
+ "sc-consensus-babe",
+ "sc-consensus-babe-rpc",
+ "sc-consensus-epochs",
  "sc-executor",
  "sc-finality-grandpa",
+ "sc-finality-grandpa-rpc",
+ "sc-keystore",
+ "sc-network",
  "sc-rpc",
  "sc-rpc-api",
  "sc-service",
+ "sc-telemetry",
  "sc-transaction-pool",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
- "sp-consensus-aura",
+ "sp-consensus-babe",
  "sp-core",
  "sp-finality-grandpa",
  "sp-inherents",
@@ -3551,6 +3560,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-im-online"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bca8829f5beda7e8bce0d887e3547da9746d71e5e4523acb79d7fc9d823a09d8"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-authorship",
+ "pallet-session",
+ "parity-scale-codec",
+ "serde",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-poe"
 version = "2.0.0"
 dependencies = [
@@ -3596,6 +3625,27 @@ dependencies = [
  "sp-staking",
  "sp-std",
  "sp-trie",
+]
+
+[[package]]
+name = "pallet-staking"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "def1b8639275c25dd621ae68a18c25d14f14992031c360eff98dd6a1d0095213"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-authorship",
+ "pallet-session",
+ "parity-scale-codec",
+ "serde",
+ "sp-application-crypto",
+ "sp-io",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+ "static_assertions",
 ]
 
 [[package]]
@@ -3950,6 +4000,12 @@ dependencies = [
  "crypto-mac 0.7.0",
  "rayon",
 ]
+
+[[package]]
+name = "pdqselect"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ec91767ecc0a0bbe558ce8c9da33c068066c57ecc8bb8477ef8c1ad3ef77c27"
 
 [[package]]
 name = "peeking_take_while"
@@ -4920,35 +4976,87 @@ dependencies = [
 ]
 
 [[package]]
-name = "sc-consensus-aura"
-version = "0.8.0"
+name = "sc-consensus-babe"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0b4fbf217f3942ae545ad70cd5b5d567b4519b9acb07b35e0de5cce7e7ef195"
+checksum = "6f1f50e27ce3cddd9bed5aeab449ab5f62dbdf8670cba6b1a012e07323ca89b3"
 dependencies = [
  "derive_more",
+ "fork-tree",
  "futures 0.3.5",
  "futures-timer 3.0.2",
  "log",
+ "merlin",
+ "num-bigint",
+ "num-rational",
+ "num-traits",
  "parity-scale-codec",
  "parking_lot 0.10.2",
- "sc-block-builder",
+ "pdqselect",
+ "rand 0.7.3",
+ "retain_mut",
  "sc-client-api",
+ "sc-consensus-epochs",
  "sc-consensus-slots",
+ "sc-consensus-uncles",
  "sc-keystore",
  "sc-telemetry",
+ "schnorrkel",
+ "serde",
  "sp-api",
  "sp-application-crypto",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
- "sp-consensus-aura",
+ "sp-consensus-babe",
+ "sp-consensus-vrf",
  "sp-core",
  "sp-inherents",
  "sp-io",
  "sp-runtime",
  "sp-timestamp",
+ "sp-utils",
  "sp-version",
  "substrate-prometheus-endpoint",
+]
+
+[[package]]
+name = "sc-consensus-babe-rpc"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "936655f94393a1ead8ac9108c4fdb7e8f3fbdd2a6506b6b9a46a6fee22b01b96"
+dependencies = [
+ "derive_more",
+ "futures 0.3.5",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "sc-consensus-babe",
+ "sc-consensus-epochs",
+ "sc-keystore",
+ "sc-rpc-api",
+ "serde",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
+name = "sc-consensus-epochs"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "107e56c59690372725b8d5a6f432c26a0b355776c4cdea9e927dc50528c92a05"
+dependencies = [
+ "fork-tree",
+ "parity-scale-codec",
+ "parking_lot 0.10.2",
+ "sc-client-api",
+ "sp-blockchain",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -4973,6 +5081,21 @@ dependencies = [
  "sp-inherents",
  "sp-runtime",
  "sp-state-machine",
+]
+
+[[package]]
+name = "sc-consensus-uncles"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2c5828de266141d5dad38a55e07de0900efb9ac43acf1ecd02abfeb59c73755"
+dependencies = [
+ "log",
+ "sc-client-api",
+ "sp-authorship",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -5093,6 +5216,31 @@ dependencies = [
  "sp-runtime",
  "sp-utils",
  "substrate-prometheus-endpoint",
+]
+
+[[package]]
+name = "sc-finality-grandpa-rpc"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03ea0e17531f6615df0778a559dd5b33c5c7b5b4ac847dce9a79bc32e3a39340"
+dependencies = [
+ "derive_more",
+ "finality-grandpa",
+ "futures 0.3.5",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "log",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-finality-grandpa",
+ "sc-rpc",
+ "serde",
+ "serde_json",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -6064,6 +6212,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-consensus-babe"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "940734344fd43cc26618baf75638592e22ae609965c25280231843c3bf1425de"
+dependencies = [
+ "merlin",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-consensus",
+ "sp-consensus-slots",
+ "sp-consensus-vrf",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
+ "sp-timestamp",
+]
+
+[[package]]
 name = "sp-consensus-slots"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6071,6 +6239,19 @@ checksum = "83ea323ccf4ec8aad353fbc9016a1cb8cbf0d872d33bc8874cb0753b014fb7fc"
 dependencies = [
  "parity-scale-codec",
  "sp-runtime",
+]
+
+[[package]]
+name = "sp-consensus-vrf"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7e76b3073ea5be8aac66aaaa3f5e9ac4e0606d74571591ce879702f96cabbee"
+dependencies = [
+ "parity-scale-codec",
+ "schnorrkel",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6226,6 +6407,31 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "strum",
+]
+
+[[package]]
+name = "sp-npos-elections"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "404f9b99ff38395d48bf2f041096fc5dbc1b892a8c314314c7bf66a0dfb5622c"
+dependencies = [
+ "parity-scale-codec",
+ "serde",
+ "sp-arithmetic",
+ "sp-npos-elections-compact",
+ "sp-std",
+]
+
+[[package]]
+name = "sp-npos-elections-compact"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4ac5b8443203fbc6472f08f376b3b09307dc3ae1b0c1a91776a3b934f1314ce"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

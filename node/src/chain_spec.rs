@@ -1,12 +1,18 @@
-use sp_core::{Pair, Public, sr25519};
+use sp_core::{Pair, Public, crypto::UncheckedInto, sr25519};
 use node_template_runtime::{
-	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
-	SudoConfig, SystemConfig, WASM_BINARY, Signature
+	AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
+	SudoConfig, SystemConfig, SessionConfig, StakingConfig, DemocracyConfig,
+	ElectionsConfig, CouncilConfig, TechnicalCommitteeConfig, opaque::SessionKeys,
+	StakerStatus, Balance, currency::DOLLARS, WASM_BINARY, Signature, ImOnlineConfig,
 };
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_consensus_babe::{AuthorityId as BabeId};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
-use sp_runtime::traits::{Verify, IdentifyAccount};
+use pallet_im_online::sr25519::{AuthorityId as ImOnlineId};
+use sp_runtime::{Perbill, traits::{Verify, IdentifyAccount}};
 use sc_service::ChainType;
+use hex_literal::hex;
+use telemetry::TelemetryEndpoints;
+use pallet_staking::Forcing;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
