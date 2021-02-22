@@ -268,6 +268,11 @@ impl pallet_sudo::Trait for Runtime {
 	type Call = Call;
 }
 
+/// Configure the template pallet in pallets/template.
+impl pallet_template::Trait for Runtime {
+	type Event = Event;
+}
+
 parameter_types! {
 	pub const MaxClaimLength: u32 = 255;
 }
