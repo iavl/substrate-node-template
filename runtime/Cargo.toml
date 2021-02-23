@@ -104,6 +104,8 @@ std = [
     'pallet-utility/std',
 
     'pallet-template/std',
+    'pallet-poe/std',
+    'pallet-benchmark-demo/std',
 
     'pallet-timestamp/std',
     'pallet-transaction-payment/std',
