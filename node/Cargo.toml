@@ -1,6 +1,6 @@
 [package]
 authors = ['iavl']
-name = "tao"
+name = "node-template"
 build = 'build.rs'
 description = 'Substrate node template'
 edition = '2018'

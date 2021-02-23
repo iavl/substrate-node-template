@@ -27,7 +27,7 @@ for i in 1 2 3 4; do for j in im_online; do subkey inspect --scheme sr25519 "$SE
 cargo build --release
 
 # 生成chain spec
-./target/release/node-template build-spec --chain tao > customSpec.json
+./target/release/node-template build-spec --chain tao_testnet > customSpec.json
 
 # 编码chain spec
-./target/release/node-template build-spec --chain tao --raw > customSpec-raw.json
+./target/release/node-template build-spec --chain tao_testnet --raw > customSpec-raw.json
