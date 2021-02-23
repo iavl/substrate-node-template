@@ -1,0 +1,51 @@
+Pallet: "pallet_benchmark_demo", Extrinsic: "do_something", Lowest values: [], Highest values: [], Steps: [20], Repeat: 50
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=    36.94
+    + b        0
+              µs
+
+Reads = 0 + (0 * b)
+Writes = 1 + (0 * b)
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    b   mean µs  sigma µs       %
+    1     53.26     10.83   20.3%
+   50     50.53     11.99   23.7%
+   99     39.11     1.761    4.5%
+  148     60.57      10.4   17.1%
+  197     35.96     0.192    0.5%
+  246     38.07     0.615    1.6%
+  295     36.11     0.319    0.8%
+  344     37.07     1.615    4.3%
+  393        36         0    0.0%
+  442     36.03     0.192    0.5%
+  491     36.19     0.394    1.0%
+  540     37.61     2.237    5.9%
+  589     36.26     0.443    1.2%
+  638     36.23     0.421    1.1%
+  687     36.15      0.36    0.9%
+  736      36.3     0.461    1.2%
+  785     36.03     0.192    0.5%
+  834        36         0    0.0%
+  883        36         0    0.0%
+  932     36.15      0.36    0.9%
+  981     35.92     0.266    0.7%
+
+Quality and confidence:
+param     error
+b             0
+
+Model:
+Time ~=    45.74
+    + b        0
+              µs
+
+Reads = 0 + (0 * b)
+Writes = 1 + (0 * b)
